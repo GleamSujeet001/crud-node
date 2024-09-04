@@ -134,9 +134,12 @@ app.post('/user-login', async (req, res) => {
     // Remove sensitive information before sending the response
     const userWithoutPassword = {
       _id: user._id,
+      name: user.name,
       username: user.username,
       email: user.email,
       image: user.image,
+      contact:user.contact,
+      createdDate:user.createdDate,
       // add other user fields here
     };
 
@@ -175,16 +178,22 @@ app.get('/get-student-data', async (req, res) => {
 app.put('/update-user-data/:id', userUpload.single('image'), async (req, res) => {
   try {
     const { name, username, contact } = req.body;
-    const image = req.file ? req.file.path : null;
+
+    // Construct the update data object
+    const updateData = {
+      name,
+      username,
+      contact
+    };
+
+    // Only update the image if a new image is uploaded
+    if (req.file) {
+      updateData.image = `uploads/${req.file.filename}`;
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
-      {
-        name,
-        username,
-        contact,
-        image
-      },
+      updateData,
       { new: true }
     );
 
@@ -197,25 +206,31 @@ app.put('/update-user-data/:id', userUpload.single('image'), async (req, res) =>
     res.status(500).json({ message: 'Error updating user data', error });
   }
 });
+
 app.put('/update-student-data/:id', studentUpload.single('profile'), async (req, res) => {
   try {
-    const { fname, lname, email, mobile, gender, status, location } = req.body;
-    const profile = req.file ? req.file.path : null;
 
-    // Find and update the student by ID
+    const { fname, lname, email, mobile, gender, status, location } = req.body;
+    const profile = req.file ? `studpic/${req.file.filename}` : '';
+
+    const updateData = {
+      fname,
+      lname,
+      email,
+      mobile,
+      gender,
+      status,
+      location
+    };
+
+    if (profile) {
+      updateData.profile = profile;
+    }
+
     const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id,
-      {
-        fname,
-        lname,
-        email,
-        mobile,
-        gender,
-        status,
-        location,
-        ...(profile && { profile }) // Only update profile if a new file was uploaded
-      },
-      { new: true } // Return the updated document
+      updateData,
+      { new: true }
     );
 
     if (!updatedStudent) {
@@ -228,6 +243,7 @@ app.put('/update-student-data/:id', studentUpload.single('profile'), async (req,
     res.status(500).json({ message: 'Error updating student data', error });
   }
 });
+
 
 // Delete User Data
 app.delete('/delete-student-data/:id', async (req, res) => {
@@ -285,3 +301,31 @@ app.post('/Add-student', studentUpload.single('profile'), async (req, res) => {
     return res.status(500).json({ message: 'Error registering student', error });
   }
 });
+
+
+app.post('/user-change-password', async (req, res) => {
+  const { oldPassword, newPassword, userData } = req.body;
+  try {
+    const user = await User.findOne({ username:userData.email });
+      // console.log(userData.email);
+      
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+    // Compare the provided old password with the hashed password stored in the database
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Old password is incorrect' });
+    }
+    // Hash the new password before saving it
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    await user.save();
+
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
