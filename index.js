@@ -14,6 +14,9 @@ require('dotenv').config();
 app.use(express.json());
 app.use(cors());
 
+const JWT_SECRET = process.env.JWT_SECRET;
+const authenticateToken = require('./authMiddleware.js');
+
 // Ensure directories exist
 const userUploadDir = path.join(__dirname, 'uploads');
 const studentUploadDir = path.join(__dirname, 'studpic');
@@ -116,7 +119,8 @@ app.post('/user-signup', userUpload.single('image'), async (req, res) => {
 });
 
 
-// User Login
+
+// User Login Route
 app.post('/user-login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -131,33 +135,36 @@ app.post('/user-login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Remove sensitive information before sending the response
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
     const userWithoutPassword = {
       _id: user._id,
       name: user.name,
       username: user.username,
       email: user.email,
       image: user.image,
-      contact:user.contact,
-      createdDate:user.createdDate,
-      // add other user fields here
+      contact: user.contact,
+      createdDate: user.createdDate,
     };
 
-    // Generate JWT token (optional, if needed in the future)
-    // const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    //   expiresIn: '1h', // Token expires in 1 hour
-    // });
-
-    // Send user data
-    res.json({ message: 'Login successful', user: userWithoutPassword });
+    res.json({
+      message: 'Login successful',
+      token,
+      user: userWithoutPassword,
+    });
 
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
 });
 
+
 // Get User Data
-app.get('/get-user-data', async (req, res) => {
+app.get('/get-user-data',authenticateToken, async (req, res) => {
   try {
     const users = await User.find().sort({ _id: -1 });
     res.json(users);
@@ -166,7 +173,7 @@ app.get('/get-user-data', async (req, res) => {
   }
 });
 
-app.get('/get-student-data', async (req, res) => {
+app.get('/get-student-data',authenticateToken, async (req, res) => {
   try {
     const users = await Student.find().sort({ _id: -1 });
     res.json(users);
@@ -175,7 +182,7 @@ app.get('/get-student-data', async (req, res) => {
   }
 });
 // Update User Data
-app.put('/update-user-data/:id', userUpload.single('image'), async (req, res) => {
+app.put('/update-user-data/:id', authenticateToken,userUpload.single('image'), async (req, res) => {
   try {
     const { name, username, contact } = req.body;
 
@@ -207,7 +214,7 @@ app.put('/update-user-data/:id', userUpload.single('image'), async (req, res) =>
   }
 });
 
-app.put('/update-student-data/:id', studentUpload.single('profile'), async (req, res) => {
+app.put('/update-student-data/:id', authenticateToken,studentUpload.single('profile'), async (req, res) => {
   try {
 
     const { fname, lname, email, mobile, gender, status, location } = req.body;
@@ -246,7 +253,7 @@ app.put('/update-student-data/:id', studentUpload.single('profile'), async (req,
 
 
 // Delete User Data
-app.delete('/delete-student-data/:id', async (req, res) => {
+app.delete('/delete-student-data/:id',authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -257,7 +264,7 @@ app.delete('/delete-student-data/:id', async (req, res) => {
   }
 });
 
-app.delete('/delete-user-data/:id', async (req, res) => {
+app.delete('/delete-user-data/:id',authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -268,7 +275,7 @@ app.delete('/delete-user-data/:id', async (req, res) => {
   }
 });
 // Add Student
-app.post('/Add-student', studentUpload.single('profile'), async (req, res) => {
+app.post('/Add-student',authenticateToken, studentUpload.single('profile'), async (req, res) => {
   try {
     const { fname, lname, email, mobile, gender, status, location } = req.body;
 
@@ -303,7 +310,7 @@ app.post('/Add-student', studentUpload.single('profile'), async (req, res) => {
 });
 
 
-app.post('/user-change-password', async (req, res) => {
+app.post('/user-change-password',authenticateToken, async (req, res) => {
   const { oldPassword, newPassword, userData } = req.body;
   try {
     const user = await User.findOne({ username:userData.email });
