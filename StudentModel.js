@@ -8,7 +8,8 @@ const studentSchema = new mongoose.Schema({
   gender: { type: String, required: true },
   status: { type: String, required: true },
   location: { type: String, required: true },
-  profile: { type: String, required: true }, // Path to the image file
+  profile: { type: String }, 
+  parentsId: { type: String, required: true },
   createdDate: { type: Date, default: Date.now },
 });
 
