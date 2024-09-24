@@ -16,7 +16,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: "https://crud-react-5npz.onrender.com/",
+    origin: "https://crud-react-5npz.onrender.com",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
@@ -73,7 +73,7 @@ server.on("error", (err) => {
 
 const io = socketIo(server, {
   cors: {
-    origin: "https://crud-react-5npz.onrender.com/",
+    origin: "https://crud-react-5npz.onrender.com",
     methods: ["GET", "POST"],
   },
 });
