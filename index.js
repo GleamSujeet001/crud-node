@@ -13,11 +13,22 @@ const fs = require("fs");
 const socketIo = require("socket.io");
 require("dotenv").config();
 app.use(express.json());
-app.use(cors());
+
+app.use(
+  cors({
+    origin: "https://crud-react-jemys3lrw-gleamsujeet001s-projects.vercel.app",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+  })
+);
+
+// Handle preflight requests
+app.options("*", cors());
+
+// Your other middleware and rout
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const authenticateToken = require("./authMiddleware.js");
-
 
 const userUploadDir = path.join(__dirname, "uploads");
 const studentUploadDir = path.join(__dirname, "studpic");
@@ -28,10 +39,8 @@ if (!fs.existsSync(studentUploadDir)) {
   fs.mkdirSync(studentUploadDir, { recursive: true });
 }
 
-
 app.use("/uploads", express.static(userUploadDir));
 app.use("/studpic", express.static(studentUploadDir));
-
 
 const userStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -51,10 +60,8 @@ const studentStorage = multer.diskStorage({
   },
 });
 
-
 const userUpload = multer({ storage: userStorage });
 const studentUpload = multer({ storage: studentStorage });
-
 
 const PORT = process.env.PORT || 3939;
 const server = app.listen(PORT, () => {
@@ -66,7 +73,7 @@ server.on("error", (err) => {
 
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:5173", 
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
   },
 });
@@ -79,14 +86,13 @@ io.on("connection", (socket) => {
 
   socket.broadcast.emit("user-online");
 
-
   socket.on("typing", (data) => {
-    socket.broadcast.emit("user-typing", data); 
+    socket.broadcast.emit("user-typing", data);
   });
 
   socket.on("message", (data) => {
     console.log("Message received:", data);
-    socket.broadcast.emit("rec-message", data); 
+    socket.broadcast.emit("rec-message", data);
   });
 
   socket.on("disconnect", () => {
@@ -108,7 +114,6 @@ mongoose
   .connect(process.env.MONGO_URI, {})
   .then(() => console.log("MongoDB Atlas connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
-
 
 app.post("/user-signup", userUpload.single("image"), async (req, res) => {
   try {
@@ -148,7 +153,6 @@ app.post("/user-signup", userUpload.single("image"), async (req, res) => {
     return res.status(400).send("Error registering user: " + err.message);
   }
 });
-
 
 app.post("/user-login", async (req, res) => {
   const { username, password } = req.body;
@@ -190,7 +194,6 @@ app.post("/user-login", async (req, res) => {
   }
 });
 
-
 app.get("/get-user-data", authenticateToken, async (req, res) => {
   try {
     const users = await User.find().sort({ _id: -1 });
@@ -215,7 +218,6 @@ app.post("/get-student-data", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
 
 app.put(
   "/update-user-data/:id",
@@ -298,7 +300,6 @@ app.put(
     }
   }
 );
-
 
 app.delete("/delete-student-data/:id", authenticateToken, async (req, res) => {
   try {
