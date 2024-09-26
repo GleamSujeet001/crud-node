@@ -14,7 +14,7 @@ const socketIo = require("socket.io");
 require("dotenv").config();
 app.use(express.json());
 const corsOptions = {
-  origin: "https://crud-react-5npz.onrender.com",
+  origin: "https://crud-node-kun7.onrender.com",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
 };
@@ -67,7 +67,7 @@ server.on("error", (err) => {
 
 const io = socketIo(server, {
   cors: {
-    origin: "https://crud-react-5npz.onrender.com",
+    origin: "https://crud-node-kun7.onrender.com",
     methods: ["GET", "POST"],
   },
 });
