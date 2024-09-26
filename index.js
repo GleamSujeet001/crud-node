@@ -13,13 +13,16 @@ const fs = require("fs");
 const socketIo = require("socket.io");
 require("dotenv").config();
 app.use(express.json());
+
 const corsOptions = {
-  origin: "*",
+  origin: "https://crud-react-5npz.onrender.com", // Allow this specific origin
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true,
+  credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 };
 
-app.options("*", cors(corsOptions)); // Preflight request support for all routes
+// Use CORS middleware
+app.use(cors(corsOptions));
+
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const authenticateToken = require("./authMiddleware.js");
