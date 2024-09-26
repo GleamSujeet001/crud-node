@@ -13,19 +13,13 @@ const fs = require("fs");
 const socketIo = require("socket.io");
 require("dotenv").config();
 app.use(express.json());
+const corsOptions = {
+  origin: "https://crud-react-5npz.onrender.com",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+};
 
-app.use(
-  cors({
-    origin: "https://crud-react-5npz.onrender.com",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
-  })
-);
-
-// Handle preflight requests
-app.options("*", cors());
-
-// Your other middleware and rout
+app.options("*", cors(corsOptions)); // Preflight request support for all routes
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const authenticateToken = require("./authMiddleware.js");
@@ -84,7 +78,7 @@ io.on("connection", (socket) => {
   // const userId = socket.handshake.query.userId;
   // console.log(userId, "user-online");
 
-  socket.broadcast.emit("user-online");
+  // socket.broadcast.emit("user-online");
 
   socket.on("typing", (data) => {
     socket.broadcast.emit("user-typing", data);
