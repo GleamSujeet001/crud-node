@@ -17,7 +17,6 @@ app.use(express.json());
 const corsOptions = {
   origin: "https://crud-react-5npz.onrender.com", // Allow this specific origin
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 };
 
 // Use CORS middleware
